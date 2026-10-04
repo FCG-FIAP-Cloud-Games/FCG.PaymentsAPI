@@ -1,4 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
+using FCG.Payments.Application.Payments.CreatePayment;
+using FCG.Payments.Application.Payments.UpdatePaymentStatus;
 
 namespace FCG.Payments.Application;
 
@@ -6,7 +8,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddPaymentsApplication(this IServiceCollection services)
     {
-        // Application use cases, consumers and processing abstractions will be registered here.
+        services.AddScoped<CreatePaymentHandler>();
+        services.AddScoped<UpdatePaymentStatusHandler>();
         return services;
     }
 }

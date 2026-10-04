@@ -2,9 +2,14 @@
   <PropertyGroup>
     <RootNamespace>FCG.Payments.Api</RootNamespace>
     <AssemblyName>FCG.Payments.Api</AssemblyName>
+    <UserSecretsId>FCG.Payments.Api-Local</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FCG.Payments.Application\FCG.Payments.Application.csproj" />
