@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>FCG.Payments.Api</RootNamespace>
+    <AssemblyName>FCG.Payments.Api</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FCG.Payments.Application\FCG.Payments.Application.csproj" />
+    <ProjectReference Include="..\FCG.Payments.Infrastructure\FCG.Payments.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>
