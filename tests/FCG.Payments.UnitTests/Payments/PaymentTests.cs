@@ -85,10 +85,11 @@ public sealed class PaymentTests
         using var dbContext = CreateDbContext(connection);
 
         var entityTypes = dbContext.Model.GetEntityTypes().ToArray();
-        Assert.Equal(3, entityTypes.Length);
+        Assert.Equal(4, entityTypes.Length);
         Assert.Contains(entityTypes, entity => entity.ClrType == typeof(Payment));
         Assert.Contains(entityTypes, entity => entity.ClrType == typeof(PaymentAttempt));
         Assert.Contains(entityTypes, entity => entity.ClrType == typeof(PaymentInboxMessage));
+        Assert.Contains(entityTypes, entity => entity.ClrType == typeof(PaymentOutboxMessage));
         Assert.All(entityTypes.SelectMany(entity => entity.GetForeignKeys()), foreignKey =>
             Assert.Equal(typeof(Payment), foreignKey.PrincipalEntityType.ClrType));
         Assert.Contains(entityTypes.Single(entity => entity.ClrType == typeof(Payment))

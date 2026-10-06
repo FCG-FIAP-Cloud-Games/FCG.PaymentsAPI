@@ -1,7 +1,9 @@
 using FCG.Payments.Application.Abstractions.Repositories;
+using FCG.Payments.Application.Messaging;
 using FCG.Payments.Application.Payments.ProcessPayment;
 using FCG.Payments.Domain.Payments;
 using FCG.Payments.Infrastructure.Data.EF.Context;
+using FCG.Payments.Infrastructure.Messaging;
 using FCG.Payments.Infrastructure.Payments;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +36,17 @@ public sealed class ProcessPaymentHandlerTests
         var attempt = Assert.Single((await database.Payments.Include(item => item.Attempts).SingleAsync()).Attempts);
         Assert.Equal(expectedStatus, attempt.Status);
         Assert.Equal(1, attempt.AttemptNumber);
+        var outboxMessage = await database.OutboxMessages.SingleAsync();
+        var paymentEvent = outboxMessage.DeserializeEvent();
+        Assert.NotEqual(Guid.Empty, paymentEvent.EventId);
+        Assert.Equal(payment.CorrelationId, paymentEvent.CorrelationId);
+        Assert.Equal(payment.Id, paymentEvent.PaymentId);
+        Assert.Equal(payment.OrderId, paymentEvent.OrderId);
+        Assert.Equal(payment.UserId, paymentEvent.UserId);
+        Assert.Equal(payment.GameId, paymentEvent.GameId);
+        Assert.Equal(payment.Amount, paymentEvent.Amount);
+        Assert.Equal(payment.Currency, paymentEvent.Currency);
+        Assert.Equal(expectedStatus.ToString(), paymentEvent.Status);
     }
 
     [Theory]
@@ -56,6 +69,7 @@ public sealed class ProcessPaymentHandlerTests
         Assert.Equal(status, result.PreviousStatus);
         Assert.Equal(status, result.CurrentStatus);
         Assert.Single((await database.Payments.Include(item => item.Attempts).SingleAsync()).Attempts);
+        Assert.Empty(await database.OutboxMessages.ToListAsync());
     }
 
     [Fact]
@@ -86,6 +100,7 @@ public sealed class ProcessPaymentHandlerTests
         Assert.False(second!.WasProcessed);
         Assert.Equal(first.CurrentStatus, second.CurrentStatus);
         Assert.Single((await database.Payments.Include(item => item.Attempts).SingleAsync()).Attempts);
+        Assert.Single(await database.OutboxMessages.ToListAsync());
     }
 
     [Fact]
@@ -112,10 +127,13 @@ public sealed class ProcessPaymentHandlerTests
     }
 
     private static ProcessPaymentHandler CreateHandler(PaymentsDbContext database) =>
-        new(new PaymentRepositoryForTests(database), new AmountBasedPaymentSimulationStrategy(100m));
+        new(
+            new PaymentRepositoryForTests(database),
+            new AmountBasedPaymentSimulationStrategy(100m),
+            new PaymentProcessedEventOutbox(database));
 
     private static Payment CreatePayment(decimal amount) =>
-        Payment.Create(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), amount, "USD");
+        Payment.Create(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), amount, "USD", correlationId: Guid.NewGuid());
 
     private static async Task<PaymentsDbContext> CreateDatabaseAsync()
     {

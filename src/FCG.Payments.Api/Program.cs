@@ -1,5 +1,6 @@
 using FCG.Payments.Application;
 using FCG.Payments.Api.Messaging;
+using FCG.Payments.Api.Payments;
 using FCG.Payments.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,8 @@ builder.Services.AddPaymentsInfrastructure(builder.Configuration);
 builder.Services.AddPaymentsMessaging(builder.Configuration);
 
 var app = builder.Build();
+
+app.MapPaymentListingEndpoints();
 
 app.UseExceptionHandler();
 

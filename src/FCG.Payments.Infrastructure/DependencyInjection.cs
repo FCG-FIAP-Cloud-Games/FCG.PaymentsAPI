@@ -9,6 +9,7 @@ using FCG.Payments.Application.Messaging;
 using FCG.Payments.Infrastructure.Messaging;
 using FCG.Payments.Application.Payments.ProcessPayment;
 using FCG.Payments.Infrastructure.Payments;
+using FCG.Payments.Application.Payments.Queries;
 
 namespace FCG.Payments.Infrastructure;
 
@@ -23,8 +24,12 @@ public static class DependencyInjection
         services.AddDbContext<PaymentsDbContext>(options =>
             options.UseNpgsql(connectionString, postgres =>
                 postgres.MigrationsAssembly(typeof(PaymentsDbContext).Assembly.FullName)));
+        services.AddSingleton(TimeProvider.System);
         services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IPaymentListingService, PaymentListingService>();
         services.AddScoped<IOrderPlacedEventProcessor, OrderPlacedEventProcessor>();
+        services.AddScoped<IPaymentProcessedEventOutbox, PaymentProcessedEventOutbox>();
+        services.AddScoped<PaymentOutboxDispatcher>();
         var configuredApprovalLimit = configuration["PaymentSimulation:ApprovalLimit"];
         var approvalLimit = string.IsNullOrWhiteSpace(configuredApprovalLimit)
             ? 100m

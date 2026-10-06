@@ -1,4 +1,5 @@
 using System.Net;
+using FCG.Payments.Api.Messaging;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -22,6 +23,13 @@ public sealed class HealthEndpointTests : IClassFixture<WebApplicationFactory<Pr
                 if (massTransitHostedService is not null)
                 {
                     services.Remove(massTransitHostedService);
+                }
+
+                var outboxHostedService = services.FirstOrDefault(descriptor =>
+                    descriptor.ImplementationType == typeof(PaymentOutboxBackgroundService));
+                if (outboxHostedService is not null)
+                {
+                    services.Remove(outboxHostedService);
                 }
             })).CreateClient();
     }

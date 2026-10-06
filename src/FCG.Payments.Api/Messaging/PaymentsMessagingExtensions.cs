@@ -30,6 +30,9 @@ public static class PaymentsMessagingExtensions
                     host.Password(password);
                 });
 
+                bus.Message<PaymentProcessedEvent>(message =>
+                    message.SetEntityName("payment-processed"));
+
                 bus.ReceiveEndpoint(PaymentMessageTestEndpoints.OrderPlacedQueue, endpoint =>
                 {
                     endpoint.PrefetchCount = 16;
@@ -45,6 +48,9 @@ public static class PaymentsMessagingExtensions
                 });
             });
         });
+
+        services.AddScoped<IPaymentProcessedEventPublisher, MassTransitPaymentProcessedEventPublisher>();
+        services.AddHostedService<PaymentOutboxBackgroundService>();
 
         return services;
     }

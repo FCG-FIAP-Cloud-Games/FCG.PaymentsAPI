@@ -1,11 +1,13 @@
 using FCG.Payments.Application.Abstractions.Repositories;
+using FCG.Payments.Application.Messaging;
 using FCG.Payments.Domain.Payments;
 
 namespace FCG.Payments.Application.Payments.ProcessPayment;
 
 public sealed class ProcessPaymentHandler(
     IPaymentRepository paymentRepository,
-    IPaymentSimulationStrategy simulationStrategy)
+    IPaymentSimulationStrategy simulationStrategy,
+    IPaymentProcessedEventOutbox outbox)
 {
     public async Task<ProcessPaymentResult?> HandleAsync(
         Guid paymentId,
@@ -37,6 +39,21 @@ public sealed class ProcessPaymentHandler(
         var finalStatus = simulationStrategy.Decide(payment);
         payment.UpdateStatus(finalStatus);
         payment.AddAttempt(finalStatus, createdAt: payment.UpdatedAt);
+        outbox.Enqueue(new PaymentProcessedEvent
+        {
+            EventId = Guid.NewGuid(),
+            CorrelationId = payment.CorrelationId ??
+                throw new InvalidOperationException("A processed payment must have a correlation ID."),
+            OccurredAt = payment.UpdatedAt,
+            Version = 1,
+            PaymentId = payment.Id,
+            OrderId = payment.OrderId,
+            UserId = payment.UserId,
+            GameId = payment.GameId,
+            Amount = payment.Amount,
+            Currency = payment.Currency,
+            Status = payment.Status.ToString()
+        });
         await paymentRepository.SaveChangesAsync(cancellationToken);
 
         return new ProcessPaymentResult(

@@ -45,6 +45,63 @@ namespace FCG.Payments.Infrastructure.Data.EF.Migrations
                     b.ToTable("InboxMessages");
                 });
 
+            modelBuilder.Entity("FCG.Payments.Infrastructure.Messaging.PaymentOutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTime?>("LeaseExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LeaseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PaymentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_OutboxMessages_EventId");
+
+                    b.HasIndex("PaymentId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_OutboxMessages_PaymentId");
+
+                    b.HasIndex("PublishedAt", "NextAttemptAt", "LeaseExpiresAt")
+                        .HasDatabaseName("IX_OutboxMessages_Pending");
+
+                    b.ToTable("OutboxMessages", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_OutboxMessages_Attempts_NonNegative", "\"Attempts\" >= 0");
+                        });
+                });
+
             modelBuilder.Entity("FCG.Payments.Domain.Payments.Payment", b =>
                 {
                     b.Property<Guid>("Id")

@@ -12,6 +12,8 @@ public sealed class PaymentsDbContext(DbContextOptions<PaymentsDbContext> option
 
     public DbSet<PaymentInboxMessage> InboxMessages => Set<PaymentInboxMessage>();
 
+    public DbSet<PaymentOutboxMessage> OutboxMessages => Set<PaymentOutboxMessage>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PaymentsDbContext).Assembly);
