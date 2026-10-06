@@ -1,5 +1,9 @@
 using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Xunit;
 
 namespace FCG.Payments.IntegrationTests;
@@ -10,7 +14,16 @@ public sealed class HealthEndpointTests : IClassFixture<WebApplicationFactory<Pr
 
     public HealthEndpointTests(WebApplicationFactory<Program> factory)
     {
-        _client = factory.CreateClient();
+        _client = factory.WithWebHostBuilder(builder =>
+            builder.ConfigureTestServices(services =>
+            {
+                var massTransitHostedService = services.FirstOrDefault(descriptor =>
+                    descriptor.ImplementationType?.FullName == "MassTransit.MassTransitHostedService");
+                if (massTransitHostedService is not null)
+                {
+                    services.Remove(massTransitHostedService);
+                }
+            })).CreateClient();
     }
 
     [Fact]

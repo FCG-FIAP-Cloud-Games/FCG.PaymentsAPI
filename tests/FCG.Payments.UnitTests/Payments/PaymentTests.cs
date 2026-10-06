@@ -2,6 +2,7 @@ using FCG.Payments.Application.Abstractions.Repositories;
 using FCG.Payments.Application.Payments.CreatePayment;
 using FCG.Payments.Domain.Payments;
 using FCG.Payments.Infrastructure.Data.EF.Context;
+using FCG.Payments.Infrastructure.Messaging;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -84,13 +85,17 @@ public sealed class PaymentTests
         using var dbContext = CreateDbContext(connection);
 
         var entityTypes = dbContext.Model.GetEntityTypes().ToArray();
-        Assert.Equal(2, entityTypes.Length);
+        Assert.Equal(3, entityTypes.Length);
         Assert.Contains(entityTypes, entity => entity.ClrType == typeof(Payment));
         Assert.Contains(entityTypes, entity => entity.ClrType == typeof(PaymentAttempt));
+        Assert.Contains(entityTypes, entity => entity.ClrType == typeof(PaymentInboxMessage));
         Assert.All(entityTypes.SelectMany(entity => entity.GetForeignKeys()), foreignKey =>
             Assert.Equal(typeof(Payment), foreignKey.PrincipalEntityType.ClrType));
         Assert.Contains(entityTypes.Single(entity => entity.ClrType == typeof(Payment))
             .GetIndexes(), index => index.IsUnique && index.Properties.Single().Name == nameof(Payment.OrderId));
+        Assert.Contains(entityTypes.Single(entity => entity.ClrType == typeof(PaymentInboxMessage))
+            .GetIndexes(), index => index.IsUnique && index.Properties.Select(property => property.Name)
+                .SequenceEqual([nameof(PaymentInboxMessage.ConsumerName), nameof(PaymentInboxMessage.EventId)]));
     }
 
     [Fact]

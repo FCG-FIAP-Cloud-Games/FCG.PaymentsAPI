@@ -21,44 +21,42 @@ namespace FCG.Payments.Infrastructure.Data.EF.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.11")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
-
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             modelBuilder.Entity("FCG.Payments.Domain.Payments.Payment", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<decimal>("Amount")
                         .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
+                        .HasColumnType("numeric(18,4)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasMaxLength(3)
-                        .HasColumnType("char(3)");
+                        .IsFixedLength()
+                        .HasColumnType("character(3)");
 
                     b.Property<Guid>("GameId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("OrderId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(16)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(16)");
+                        .HasColumnType("character varying(16)");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -68,35 +66,34 @@ namespace FCG.Payments.Infrastructure.Data.EF.Migrations
 
                     b.ToTable("Payments", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Payments_Amount_Positive", "[Amount] > 0");
+                            t.HasCheckConstraint("CK_Payments_Amount_Positive", "\"Amount\" > 0");
 
-                            t.HasCheckConstraint("CK_Payments_Status", "[Status] IN ('Pending', 'Approved', 'Rejected')");
+                            t.HasCheckConstraint("CK_Payments_Status", "\"Status\" IN ('Pending', 'Approved', 'Rejected')");
                         });
                 });
 
             modelBuilder.Entity("FCG.Payments.Domain.Payments.PaymentAttempt", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<int>("AttemptNumber")
                         .HasColumnType("int");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ErrorMessage")
                         .HasMaxLength(1024)
-                        .HasColumnType("nvarchar(1024)");
+                        .HasColumnType("character varying(1024)");
 
                     b.Property<Guid>("PaymentId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(16)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(16)");
+                        .HasColumnType("character varying(16)");
 
                     b.HasKey("Id");
 
@@ -106,9 +103,9 @@ namespace FCG.Payments.Infrastructure.Data.EF.Migrations
 
                     b.ToTable("PaymentAttempts", null, t =>
                         {
-                            t.HasCheckConstraint("CK_PaymentAttempts_AttemptNumber_Positive", "[AttemptNumber] > 0");
+                            t.HasCheckConstraint("CK_PaymentAttempts_AttemptNumber_Positive", "\"AttemptNumber\" > 0");
 
-                            t.HasCheckConstraint("CK_PaymentAttempts_Status", "[Status] IN ('Pending', 'Approved', 'Rejected')");
+                            t.HasCheckConstraint("CK_PaymentAttempts_Status", "\"Status\" IN ('Pending', 'Approved', 'Rejected')");
                         });
                 });
 

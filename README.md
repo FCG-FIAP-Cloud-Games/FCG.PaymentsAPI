@@ -4,7 +4,7 @@ Microsserviço independente responsável exclusivamente pelo domínio financeiro
 
 ## Responsabilidades
 
-- Futuramente consumir `OrderPlacedEvent` e receber os dados necessários para o processamento.
+- Consumir `OrderPlacedEvent` via RabbitMQ e criar pagamentos `Pending` de forma idempotente.
 - Registrar e processar pagamentos, definir aprovação ou rejeição e garantir idempotência.
 - Futuramente publicar `PaymentProcessedEvent`.
 
@@ -16,6 +16,7 @@ O serviço não é responsável por catálogo, pedidos, biblioteca, usuários ou
 - Swagger/OpenAPI
 - Health endpoint: `GET /health`
 - Testes: xUnit
+- Mensageria: MassTransit com RabbitMQ
 
 ## Estrutura
 
@@ -47,8 +48,8 @@ dotnet test FCG.Payments.sln
 
 ## Configuração e segredos
 
-A configuração padrão está em `appsettings.json` e `appsettings.Development.json`. Configure o banco próprio do serviço por `ConnectionStrings__PaymentsDatabase` (ou `ConnectionStrings:PaymentsDatabase` em User Secrets); o valor versionado é vazio e não contém credenciais. Em produção, injete a configuração por Kubernetes Secrets. Persistência usa SQL Server e as migrations pertencem ao projeto Infrastructure. O serviço não cria chaves estrangeiras para Order, User ou Game, que são identificadores externos. Uma tentativa financeira é registrada em `PaymentAttempt` e permanece ligada ao pagamento lógico; `OrderId` é único para impedir duplicidade.
+A configuração padrão está em `appsettings.json` e `appsettings.Development.json`. Configure o banco PostgreSQL próprio do serviço por `ConnectionStrings__PaymentsDatabase` e o broker por `RabbitMq__Host`, `RabbitMq__Username` e `RabbitMq__Password` (use User Secrets/Secrets em ambientes reais). A fila consumida é `payments-order-placed`; falhas transitórias recebem três retries escalonados e, após esgotamento, o MassTransit move a mensagem para `payments-order-placed_error`. As migrations PostgreSQL pertencem ao projeto Infrastructure. A Inbox garante unicidade por consumidor e `EventId`; `OrderId` também é único. Pagamento e Inbox são confirmados na mesma transação. `CorrelationId` do evento é persistido no pagamento. O serviço não cria chaves estrangeiras para Order, User ou Game. Uma tentativa financeira é registrada em `PaymentAttempt` e permanece ligada ao pagamento lógico.
 
 ## Status da implementação
 
-Fundação financeira implementada: pagamentos `Pending` por padrão, transições para `Approved`/`Rejected`, tentativas, persistência própria com unicidade por `OrderId` e caso de uso idempotente para registrar pedidos. Consumer RabbitMQ, contratos de eventos e publicação de `PaymentProcessedEvent` permanecem para cards de mensageria seguintes.
+Fundação financeira e consumo idempotente implementados: pagamentos `Pending` por padrão, transições para `Approved`/`Rejected`, tentativas, Inbox persistente, unicidade por `OrderId`, consumer MassTransit/RabbitMQ e transação local para pagamento + Inbox. Aprovação/rejeição e publicação de `PaymentProcessedEvent` permanecem para cards seguintes.

@@ -10,8 +10,8 @@ public sealed class PaymentAttemptConfiguration : IEntityTypeConfiguration<Payme
     {
         builder.ToTable("PaymentAttempts", table =>
         {
-            table.HasCheckConstraint("CK_PaymentAttempts_AttemptNumber_Positive", "[AttemptNumber] > 0");
-            table.HasCheckConstraint("CK_PaymentAttempts_Status", "[Status] IN ('Pending', 'Approved', 'Rejected')");
+            table.HasCheckConstraint("CK_PaymentAttempts_AttemptNumber_Positive", "\"AttemptNumber\" > 0");
+            table.HasCheckConstraint("CK_PaymentAttempts_Status", "\"Status\" IN ('Pending', 'Approved', 'Rejected')");
         });
 
         builder.HasKey(attempt => attempt.Id);
@@ -24,7 +24,6 @@ public sealed class PaymentAttemptConfiguration : IEntityTypeConfiguration<Payme
         builder.Property(attempt => attempt.Status)
             .HasConversion<string>()
             .HasMaxLength(16)
-            .IsUnicode(false)
             .IsRequired();
         builder.Property(attempt => attempt.CreatedAt).IsRequired();
         builder.Property(attempt => attempt.ErrorMessage).HasMaxLength(1024);

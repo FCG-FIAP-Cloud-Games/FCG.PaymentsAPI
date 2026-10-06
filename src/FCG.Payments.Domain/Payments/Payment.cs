@@ -9,7 +9,7 @@ public sealed class Payment
         Currency = string.Empty;
     }
 
-    private Payment(Guid orderId, Guid userId, Guid gameId, decimal amount, string currency, DateTimeOffset createdAt)
+    private Payment(Guid orderId, Guid userId, Guid gameId, decimal amount, string currency, Guid? correlationId, DateTimeOffset createdAt)
     {
         Id = Guid.NewGuid();
         OrderId = orderId;
@@ -17,6 +17,7 @@ public sealed class Payment
         GameId = gameId;
         Amount = amount;
         Currency = currency;
+        CorrelationId = correlationId;
         Status = PaymentStatus.Pending;
         CreatedAt = createdAt;
         UpdatedAt = createdAt;
@@ -35,6 +36,8 @@ public sealed class Payment
 
     public string Currency { get; private set; }
 
+    public Guid? CorrelationId { get; private set; }
+
     public PaymentStatus Status { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
@@ -49,7 +52,8 @@ public sealed class Payment
         Guid gameId,
         decimal amount,
         string currency,
-        DateTimeOffset? createdAt = null)
+        DateTimeOffset? createdAt = null,
+        Guid? correlationId = null)
     {
         if (orderId == Guid.Empty)
         {
@@ -78,7 +82,7 @@ public sealed class Payment
             throw new ArgumentException("Currency must be a three-letter ISO currency code.", nameof(currency));
         }
 
-        return new Payment(orderId, userId, gameId, amount, normalizedCurrency, createdAt ?? DateTimeOffset.UtcNow);
+        return new Payment(orderId, userId, gameId, amount, normalizedCurrency, correlationId, createdAt ?? DateTimeOffset.UtcNow);
     }
 
     public void UpdateStatus(PaymentStatus status, DateTimeOffset? updatedAt = null)

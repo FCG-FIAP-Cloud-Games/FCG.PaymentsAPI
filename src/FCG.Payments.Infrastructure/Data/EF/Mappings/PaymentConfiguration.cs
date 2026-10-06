@@ -10,8 +10,8 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
     {
         builder.ToTable("Payments", table =>
         {
-            table.HasCheckConstraint("CK_Payments_Amount_Positive", "[Amount] > 0");
-            table.HasCheckConstraint("CK_Payments_Status", "[Status] IN ('Pending', 'Approved', 'Rejected')");
+            table.HasCheckConstraint("CK_Payments_Amount_Positive", "\"Amount\" > 0");
+            table.HasCheckConstraint("CK_Payments_Status", "\"Status\" IN ('Pending', 'Approved', 'Rejected')");
         });
 
         builder.HasKey(payment => payment.Id);
@@ -20,12 +20,12 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.HasIndex(payment => payment.OrderId).IsUnique().HasDatabaseName("UX_Payments_OrderId");
         builder.Property(payment => payment.UserId).IsRequired();
         builder.Property(payment => payment.GameId).IsRequired();
+        builder.Property(payment => payment.CorrelationId);
         builder.Property(payment => payment.Amount).HasPrecision(18, 4).IsRequired();
-        builder.Property(payment => payment.Currency).HasColumnType("char(3)").HasMaxLength(3).IsRequired();
+        builder.Property(payment => payment.Currency).HasMaxLength(3).IsFixedLength().IsRequired();
         builder.Property(payment => payment.Status)
             .HasConversion<string>()
             .HasMaxLength(16)
-            .IsUnicode(false)
             .IsRequired();
         builder.Property(payment => payment.CreatedAt).IsRequired();
         builder.Property(payment => payment.UpdatedAt).IsRequired();

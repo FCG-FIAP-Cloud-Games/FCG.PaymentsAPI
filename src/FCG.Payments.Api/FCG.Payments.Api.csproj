@@ -5,6 +5,7 @@
     <UserSecretsId>FCG.Payments.Api-Local</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="MassTransit.RabbitMQ" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
