@@ -31,7 +31,7 @@ public static class PaymentsMessagingExtensions
                 });
 
                 bus.Message<PaymentProcessedEvent>(message =>
-                    message.SetEntityName("payment-processed"));
+                    message.SetEntityName("PaymentProcessedEvent"));
 
                 bus.ReceiveEndpoint(PaymentMessageTestEndpoints.OrderPlacedQueue, endpoint =>
                 {
