@@ -50,6 +50,10 @@ dotnet test FCG.Payments.sln
 
 A configuração padrão está em `appsettings.json` e `appsettings.Development.json`. Configure o banco PostgreSQL próprio do serviço por `ConnectionStrings__PaymentsDatabase` e o broker por `RabbitMq__Host`, `RabbitMq__Username` e `RabbitMq__Password` (use User Secrets/Secrets em ambientes reais). A fila consumida é `payments-order-placed`; falhas transitórias recebem três retries escalonados e, após esgotamento, o MassTransit move a mensagem para `payments-order-placed_error`. As migrations PostgreSQL pertencem ao projeto Infrastructure. A Inbox garante unicidade por consumidor e `EventId`; `OrderId` também é único. Pagamento e Inbox são confirmados na mesma transação. `CorrelationId` do evento é persistido no pagamento. O serviço não cria chaves estrangeiras para Order, User ou Game. Uma tentativa financeira é registrada em `PaymentAttempt` e permanece ligada ao pagamento lógico.
 
+## Simulação de pagamento
+
+Ao consumir `OrderPlacedEvent`, o PaymentsAPI cria/reutiliza o pagamento pendente e aplica uma regra determinística configurada por `PaymentSimulation:ApprovalLimit` (padrão `100.00`): valor menor ou igual ao limite é `Approved`; valor acima é `Rejected`. A decisão e uma `PaymentAttempt` são persistidas juntas. Estados terminais não são reprocessados e não geram nova tentativa. Ajuste `PaymentSimulation__ApprovalLimit` para demonstrações; por exemplo, um valor baixo testa rejeição e um valor abaixo do limite testa aprovação.
+
 ## Status da implementação
 
-Fundação financeira e consumo idempotente implementados: pagamentos `Pending` por padrão, transições para `Approved`/`Rejected`, tentativas, Inbox persistente, unicidade por `OrderId`, consumer MassTransit/RabbitMQ e transação local para pagamento + Inbox. Aprovação/rejeição e publicação de `PaymentProcessedEvent` permanecem para cards seguintes.
+Fundação financeira e consumo idempotente implementados: pagamentos `Pending` por padrão, transições simuladas e determinísticas para `Approved`/`Rejected`, tentativas, Inbox persistente, unicidade por `OrderId`, consumer MassTransit/RabbitMQ e transações locais. A publicação de `PaymentProcessedEvent` permanece para o card seguinte.

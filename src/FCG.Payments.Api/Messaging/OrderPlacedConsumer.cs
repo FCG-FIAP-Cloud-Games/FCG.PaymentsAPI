@@ -1,10 +1,12 @@
 using FCG.Payments.Application.Messaging;
+using FCG.Payments.Application.Payments.ProcessPayment;
 using MassTransit;
 
 namespace FCG.Payments.Api.Messaging;
 
 public sealed class OrderPlacedConsumer(
     IOrderPlacedEventProcessor processor,
+    ProcessPaymentHandler processPaymentHandler,
     ILogger<OrderPlacedConsumer> logger) : IConsumer<OrderPlacedEvent>
 {
     public async Task Consume(ConsumeContext<OrderPlacedEvent> context)
@@ -27,14 +29,26 @@ public sealed class OrderPlacedConsumer(
         try
         {
             var result = await processor.ProcessAsync(context.Message, context.CancellationToken);
+            ProcessPaymentResult? paymentResult = result.PaymentId is Guid paymentId
+                ? await processPaymentHandler.HandleAsync(paymentId, context.CancellationToken)
+                : null;
+            if (result.PaymentId is not null && paymentResult is null)
+            {
+                throw new InvalidOperationException(
+                    $"Payment '{result.PaymentId}' disappeared before simulated processing.");
+            }
+
             logger.LogInformation(
-                "OrderPlacedEvent processed. EventId={EventId}, CorrelationId={CorrelationId}, OrderId={OrderId}, PaymentId={PaymentId}, Outcome={Outcome}, Duplicate={Duplicate}",
+                "OrderPlacedEvent processed. EventId={EventId}, CorrelationId={CorrelationId}, OrderId={OrderId}, PaymentId={PaymentId}, Outcome={Outcome}, Duplicate={Duplicate}, PreviousStatus={PreviousStatus}, FinalStatus={FinalStatus}, Simulated={Simulated}",
                 context.Message.EventId,
                 context.Message.CorrelationId,
                 context.Message.OrderId,
                 result.PaymentId,
                 result.Outcome,
-                result.Outcome is OrderPlacedProcessingOutcome.DuplicateEvent or OrderPlacedProcessingOutcome.DuplicateOrder);
+                result.Outcome is OrderPlacedProcessingOutcome.DuplicateEvent or OrderPlacedProcessingOutcome.DuplicateOrder,
+                paymentResult?.PreviousStatus,
+                paymentResult?.CurrentStatus,
+                paymentResult?.WasProcessed ?? false);
         }
         catch (Exception exception) when (exception is not InvalidOrderPlacedEventException)
         {
